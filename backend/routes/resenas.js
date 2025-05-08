@@ -14,7 +14,7 @@ class Reseña{
 router.post("/publicar", async(req, res) => {
     try {
         const { idPelicula, valoracion, comentario } = req.body;
-        console.log('Datos recibidos:', req.body);
+        
 
         if (!idPelicula || !valoracion || typeof valoracion !== 'number' || !comentario) {
             return res.status(400).json({
@@ -23,7 +23,6 @@ router.post("/publicar", async(req, res) => {
         }
         
         const reseña = new Reseña(idPelicula, valoracion, comentario);
-        console.log('Reseña creada:', reseña);
         
         const archivo = 'resenas.json';
         let reseñas = [];

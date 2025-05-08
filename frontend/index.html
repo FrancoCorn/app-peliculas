@@ -3,91 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Películas</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 2em; }
-    h1 { color: #333; }
-    ul { list-style: none; padding: 0; }
-    li { margin-bottom: 1em; }
-    .pelicula { 
-      border: 1px solid #ccc; 
-      padding: 1em;
-      margin-bottom: 1em;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .pelicula:hover {
-      background-color: #f0f0f0;
-    }
-    .busqueda { margin-bottom: 2em; }
-    .generos { margin: 1em 0; }
-    .generos select { padding: 5px; margin-right: 10px; }
-    
-    .reseña {
-      background-color: #f9f9f9;
-      border: 1px solid #eee;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 4px;
-      word-wrap: break-word; 
-      overflow-wrap: break-word; 
-      max-width: 100%; 
-    }
-    .reseñas-container {
-      max-height: 300px; 
-      overflow-y: auto; 
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 10px;
-      margin-top: 10px;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-    .modal-content {
-      background-color: white;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 8px;
-      width: 50%;
-      max-width: 500px;
-      position: relative;
-    }
-    .close {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      font-size: 24px;
-      cursor: pointer;
-    }
-    .reseña-form {
-      margin-top: 1em;
-    }
-    .reseña-form input, .reseña-form textarea {
-      width: 100%;
-      margin-bottom: 0.5em;
-      padding: 0.5em;
-      box-sizing: border-box;
-    }
-    .reseña-form button {
-      background-color: blue;
-      color: white;
-      padding: 0.5em 1em;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .reseña-form button:hover {
-      background-color: rgb(51, 51, 245);
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <h1>Películas</h1>
@@ -95,6 +11,12 @@
     <input type="text" id="busqueda" placeholder="Buscar por nombre...">
     <button onclick="buscarPelicula()">Buscar</button>
     <button onclick="cargarPopulares()">Ver Populares</button>
+    <input type="number" id="puntuacion" min="0" max = "10" required placeholder="Indicar puntuacion...">
+    <select id="comparador">
+      <option value="mayor">>=</option>
+      <option value="menor"><=</option>
+    </select>
+    <button onclick="buscarPorPuntuacion()">Buscar por puntuación</button>
   </div>
   <div class="generos">
     <select id="selector-generos" onchange="cargarPorGenero()">
@@ -110,179 +32,20 @@
       <div class="reseña-form">
         <form id="form-resena" onsubmit="enviarResena(event)">
           <input type="hidden" id="modal-id-pelicula" name="idPelicula">
-          <label>Puntuación (1-5):</label>
-          <input type="number" name="valoracion" min="1" max="5" required>
+          <label>Puntuación (1-10):</label>
+          <input type="number" name="valoracion" min="1" max="10" required>
           <label>Comentario:</label>
           <textarea name="comentario" required></textarea>
           <button type="submit">Publicar Reseña</button>
         </form>
         <h3>Reseñas: </h3>
-        <div class = "reseñas-container">
-          <ul id = "lista-resenas"></ul>
+        <div class="reseñas-container">
+          <ul id="lista-resenas"></ul>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-
-    function mostrarPeliculas(peliculas) {
-      const lista = document.getElementById('lista-peliculas');
-      lista.innerHTML = '';
-      if (peliculas.length === 0) {
-        lista.innerHTML = '<li>No se encontraron películas.</li>';
-        return;
-      }
-      peliculas.forEach(p => {
-        const li = document.createElement('li');
-        li.className = 'pelicula';
-        li.innerHTML = `
-          <strong>${p.nombre}</strong> (${p.fechaSalida})<br>
-          <em>Puntuación:</em> ${p.puntuacion}<br>
-          <em>Descripción:</em> ${p.descripcion}
-        `;
-        li.onclick = () => abrirModalResena(p);
-        lista.appendChild(li);
-      });
-    }
-
-    function mostrarResenas(resenas){
-      const lista = document.getElementById('lista-resenas');
-      lista.innerHTML = '';
-
-      if (resenas.length == 0){
-        lista.innerHTML = '<li>No se encontraron resenas.</li>'
-        return;
-      }
-
-      resenas.forEach(r => {
-        const li = document.createElement('li');
-        li.className = 'reseña';
-
-        li.innerHTML = `
-          <strong>Puntuación: </strong> ${r.valoracion}<br>
-          <em>Comentario: </em> ${r.comentario}
-        `;
-
-        lista.appendChild(li);
-      })
-    }
-    
-
-    function abrirModalResena(pelicula) {
-      const modal = document.getElementById('modal-resena');
-      const titulo = document.getElementById('modal-titulo');
-      const idPelicula = document.getElementById('modal-id-pelicula');
-      
-      titulo.textContent = pelicula.nombre;
-      idPelicula.value = pelicula.id;
-      modal.style.display = 'block';
-
-      cargarResenas(pelicula.id);
-    }
-
-    function cerrarModal() {
-      const modal = document.getElementById('modal-resena');
-      modal.style.display = 'none';
-      document.getElementById('form-resena').reset();
-    }
-
-    window.onclick = function(event) {
-      const modal = document.getElementById('modal-resena');
-      if (event.target == modal) {
-        cerrarModal();
-      }
-    }
-
-    async function enviarResena(event) {
-      event.preventDefault();
-      const form = event.target;
-      const idPelicula = form.idPelicula.value;
-      const valoracion = Number(form.valoracion.value);
-      const comentario = form.comentario.value;
-
-      console.log('Enviando reseña:', { idPelicula, valoracion, comentario });
-
-      try {
-        const response = await fetch('http://localhost:3000/resenas/publicar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            idPelicula: parseInt(idPelicula),
-            valoracion: parseInt(valoracion),
-            comentario
-          })
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || 'Error al publicar la reseña');
-        }
-        console.log('Respuesta del servidor:', data);
-        alert('¡Reseña publicada con éxito!');
-        cargarResenas(idPelicula);
-      } catch (error) {
-        console.error('Error completo:', error);
-        alert('Error al publicar la reseña: ' + error.message);
-      }
-    }
-
-    function cargarPopulares() {
-      fetch('http://localhost:3000/peliculas/populares')
-        .then(res => res.json())
-        .then(mostrarPeliculas)
-        .catch(() => alert('Error al cargar las películas populares'));
-    }
-
-    function buscarPelicula() {
-      const nombre = document.getElementById('busqueda').value.trim();
-      if (!nombre) {
-        alert('Ingresa un nombre para buscar');
-        return;
-      }
-      fetch(`http://localhost:3000/peliculas/nombre/${encodeURIComponent(nombre)}`)
-        .then(res => res.json())
-        .then(mostrarPeliculas)
-        .catch(() => alert('Error al buscar la película'));
-    }
-
-    function cargarResenas(idPelicula){
-      fetch(`http://localhost:3000/resenas/obtener/${idPelicula}`)
-        .then(res=> res.json())
-        .then(mostrarResenas)
-        .catch(() => alert('Error al cargar las reseñas'))
-    }
- 
-    function cargarPorGenero() {
-      const idGenero = document.getElementById('selector-generos').value;
-      if (!idGenero) return;
-      
-      fetch(`http://localhost:3000/generos/id/${idGenero}`)
-        .then(res => res.json())
-        .then(mostrarPeliculas)
-        .catch(() => alert('Error al cargar las películas por género'));
-    }
-
-    function cargarGeneros() {
-      fetch('http://localhost:3000/generos')
-        .then(res => res.json())
-        .then(generos => {
-          const selector = document.getElementById('selector-generos');
-          generos.forEach(genero => {
-            const option = document.createElement('option');
-            option.value = genero.id;
-            option.textContent = genero.name;
-            selector.appendChild(option);
-          });
-        })
-        .catch(() => alert('Error al cargar los géneros'));
-    }
-
-    cargarPopulares();
-    cargarGeneros();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

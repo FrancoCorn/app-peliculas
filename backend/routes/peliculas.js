@@ -60,4 +60,61 @@ router.get("/id/:id", async(req, res) => {
     }
 })
 
+router.get("/puntuacionMayor/:puntuacion", async(req, res) => {
+    try{
+        const puntuacion = parseFloat(req.params.puntuacion);
+        let peliculasFiltradas = [];
+        let page = 1;
+        const MAX_PAGES = 500; // Limitamos a 5 páginas para evitar demasiadas peticiones
+
+        while (peliculasFiltradas.length < 10 && page <= MAX_PAGES) {
+            const peliculas = await axios.get(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=es-ES&page=${page}`);
+
+            const peliculasPagina = peliculas.data.results
+                .filter(pelicula => pelicula.vote_average >= puntuacion)
+                .map(pelicula => new Pelicula(pelicula.id, pelicula.title, pelicula.overview, pelicula.release_date, pelicula.vote_average, pelicula.genre_ids));
+
+            peliculasFiltradas = [...peliculasFiltradas, ...peliculasPagina];
+            page++;
+        }
+
+        peliculasFiltradas = peliculasFiltradas.slice(0,10);
+        res.json(peliculasFiltradas);
+    }catch (error){
+        console.error('Error detallado:', error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            message: "Error al obtener la pelicula",
+            error: error.response ? error.response.data : error.message 
+        });
+    }
+});
+
+router.get("/puntuacionMenor/:puntuacion", async(req, res) => {
+    try{
+        const puntuacion = parseFloat(req.params.puntuacion);
+        let peliculasFiltradas = [];
+        let page = 1;
+        const MAX_PAGES = 500; // Limitamos a 5 páginas para evitar demasiadas peticiones
+
+        while (peliculasFiltradas.length < 10 && page <= MAX_PAGES) {
+            const peliculas = await axios.get(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=es-ES&page=${page}`);
+
+            const peliculasPagina = peliculas.data.results
+                .filter(pelicula => pelicula.vote_average <= puntuacion)
+                .map(pelicula => new Pelicula(pelicula.id, pelicula.title, pelicula.overview, pelicula.release_date, pelicula.vote_average, pelicula.genre_ids));
+
+            peliculasFiltradas = [...peliculasFiltradas, ...peliculasPagina];
+            page++;
+        }
+
+        peliculasFiltradas = peliculasFiltradas.slice(0,10);
+        res.json(peliculasFiltradas);
+    }catch (error){
+        console.error('Error detallado:', error.response ? error.response.data : error.message);
+        res.status(500).json({ 
+            message: "Error al obtener la pelicula",
+            error: error.response ? error.response.data : error.message 
+        });
+    }
+});
 export default router;
